@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <interrupt_context.h>
+#include <Drivers/gic.h>
 
 void FIQInterrupt(void)
 {
@@ -6,10 +8,12 @@ void FIQInterrupt(void)
 	while(1);
 }
 
-void IRQInterrupt(void)
+struct cpu_state* IRQInterrupt(struct cpu_state* state)
 {
-	printf("IRQInterrupt\n");
-	while(1);
+	// printf("IRQInterrupt\n");
+	// printState(state);
+
+	return GICHandleIRQ(state);
 }
 
 void SWInterrupt(void)

@@ -11,7 +11,8 @@ CCSOURCES = vectors.c \
 			Newlib/_read.c \
 			Newlib/newlib_stubs.c \
 			ps7_init.c \
-			Drivers/uart.c
+			Drivers/uart.c \
+			Drivers/gic.c
 
 # List C++ source files here.
 CXXSOURCES = 

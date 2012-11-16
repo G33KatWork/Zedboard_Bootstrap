@@ -1,21 +1,24 @@
 #include <sys/types.h>
+#include <errno.h>
 
-extern int  _heap_start;
-extern int _heap_end;
+extern char _heap_start[];
+extern char _heap_end[];
 
 caddr_t _sbrk(int incr)
 {
-	static unsigned char *heap = NULL;
-	unsigned char *prev_heap;
+	static char* cur_heap_end;
+	char* prev_heap_end;
 
-	if (heap == NULL) 
-		heap = (unsigned char *)&_heap_start;
-	prev_heap = heap;
+	if(cur_heap_end == NULL) cur_heap_end = _heap_start;
+	prev_heap_end = cur_heap_end;
 
-	heap += incr;
+	if((unsigned)cur_heap_end + incr > (unsigned)_heap_end)
+	{
+		errno = ENOMEM;
+	 	return (caddr_t)-1;
+	}
 
-	if ((unsigned)heap > (unsigned)_heap_end)
-		return (caddr_t) -1;
+	cur_heap_end += incr;
 
-	return (caddr_t) prev_heap;
+	return (caddr_t) prev_heap_end;
 }

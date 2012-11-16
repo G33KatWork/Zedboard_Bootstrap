@@ -23,13 +23,43 @@ _vector_table:
 
 
 IRQHandler:					/* IRQ vector handler */
-	stmdb	sp!,{r0-r3,r12,lr}		/* state save from compiled code*/
+	sub		lr, #4			/* adjust return address */
 
-	bl	IRQInterrupt			/* IRQ vector */
+	push 	{r0 - r12, lr}	/* save non-banked registers */
 
-	ldmia	sp!,{r0-r3,r12,lr}		/* state restore from compiled code */
+	msr		cpsr_ctl, #0xD3	/* switch to supervisor mode */
+	mrs		r1, spsr 		/* get banked supervisor registers */
+	mov     r2, sp
+	mov     r3, lr
+	msr     cpsr_ctl, #0xD2	/* switch back to IRQ-mode */
+	mrs     r0, spsr
+	push    {r0 - r3}		/* push the supervisor registers and IRQ spsr */
 
-	subs	pc, lr, #4			/* adjust return */
+	/* get usermode sp, lr */
+	stmdb   sp, {sp, lr}^
+	sub     sp, #8
+
+	/* handle irq */
+	mov     r0, sp
+	bl      IRQInterrupt
+	mov     sp, r0
+
+	/* restore usermode sp and lr */
+	ldmia   sp, {sp, lr}^
+	add     sp, #8
+
+	/* restore banked supervisor registers */
+	pop     {r0 - r3}
+	msr     spsr_all, r0
+	msr     cpsr_ctl, #0xD3
+	msr     spsr_all, r1
+	mov     sp, r2
+	mov     lr, r3
+	msr     cpsr_all, #0xD2
+
+	/* restore non-banked resgisters and return */
+	pop     {r0 - r12, lr}
+	movs    pc, lr
 
 
 FIQHandler:					/* FIQ vector handler */
